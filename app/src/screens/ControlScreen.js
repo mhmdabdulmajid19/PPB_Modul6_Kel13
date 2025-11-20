@@ -11,11 +11,14 @@ import {
   Platform,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext.js";
 
-export function ControlScreen() {
+export function ControlScreen({ navigation }) {
+  const { user } = useAuth();
   const [thresholdValue, setThresholdValue] = useState(30);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -64,74 +67,99 @@ export function ControlScreen() {
     }
   }, [thresholdValue, note, fetchHistory]);
 
-  return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Configure Threshold</Text>
-          {latestThreshold !== null && (
-            <Text style={styles.metaText}>
-              Current threshold: {Number(latestThreshold).toFixed(2)}°C
-            </Text>
-          )}
-          <Text style={styles.label}>Threshold (°C)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={String(thresholdValue)}
-            onChangeText={setThresholdValue}
-          />
-          <Text style={styles.label}>Note (optional)</Text>
-          <TextInput
-            style={[styles.input, styles.noteInput]}
-            value={note}
-            onChangeText={setNote}
-            multiline
-            numberOfLines={3}
-            placeholder="Describe why you are changing the threshold"
-          />
-          {error && <Text style={styles.errorText}>{error}</Text>}
+  // Show login required message if user is not logged in
+  if (!user) {
+    return (
+      <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+        <View style={styles.authRequiredContainer}>
+          <Ionicons name="lock-closed-outline" size={80} color="#d1d5db" />
+          <Text style={styles.authRequiredTitle}>Login Required</Text>
+          <Text style={styles.authRequiredText}>
+            You need to login to access the control panel
+          </Text>
           <TouchableOpacity
-            style={[styles.button, submitting && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={submitting}
+            style={styles.loginButton}
+            onPress={() => navigation.navigate('Profile')}
           >
-            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Save Threshold</Text>}
+            <Text style={styles.loginButtonText}>Go to Login</Text>
           </TouchableOpacity>
         </View>
+      </SafeAreaView>
+    );
+  }
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Threshold History</Text>
-          {loading && <ActivityIndicator />}
-        </View>
-        <DataTable
-          columns={[
-            {
-              key: "created_at",
-              title: "Saved At",
-              render: (value) => (value ? new Date(value).toLocaleString() : "--"),
-            },
-            {
-              key: "value",
-              title: "Threshold (°C)",
-              render: (value) =>
-                typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-            },
-            {
-              key: "note",
-              title: "Note",
-              render: (value) => value || "-",
-            },
-          ]}
-          data={history}
-          keyExtractor={(item) => item.id}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.container}>
+          <View style={styles.card}>
+            <Text style={styles.title}>Configure Threshold</Text>
+            {latestThreshold !== null && (
+              <Text style={styles.metaText}>
+                Current threshold: {Number(latestThreshold).toFixed(2)}°C
+              </Text>
+            )}
+            <Text style={styles.label}>Threshold (°C)</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={String(thresholdValue)}
+              onChangeText={setThresholdValue}
+            />
+            <Text style={styles.label}>Note (optional)</Text>
+            <TextInput
+              style={[styles.input, styles.noteInput]}
+              value={note}
+              onChangeText={setNote}
+              multiline
+              numberOfLines={3}
+              placeholder="Describe why you are changing the threshold"
+            />
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <TouchableOpacity
+              style={[styles.button, submitting && styles.buttonDisabled]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Save Threshold</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Threshold History</Text>
+            {loading && <ActivityIndicator />}
+          </View>
+          <DataTable
+            columns={[
+              {
+                key: "created_at",
+                title: "Saved At",
+                render: (value) => (value ? new Date(value).toLocaleString() : "--"),
+              },
+              {
+                key: "value",
+                title: "Threshold (°C)",
+                render: (value) =>
+                  typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+              },
+              {
+                key: "note",
+                title: "Note",
+                render: (value) => value || "-",
+              },
+            ]}
+            data={history}
+            keyExtractor={(item) => item.id}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -204,6 +232,36 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  authRequiredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  authRequiredTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1f2937",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  authRequiredText: {
+    fontSize: 16,
+    color: "#6b7280",
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  loginButton: {
+    backgroundColor: "#2563eb",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  loginButtonText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },

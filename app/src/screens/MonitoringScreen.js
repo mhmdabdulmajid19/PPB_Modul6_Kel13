@@ -7,13 +7,17 @@ import {
   RefreshControl,
   ActivityIndicator,
   Switch,
+  TouchableOpacity,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMqttSensor } from "../hooks/useMqttSensor.js";
 import { useNotifications } from "../hooks/useNotifications.js";
 import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const ITEMS_PER_PAGE = 10;
 
 export function MonitoringScreen() {
   const { temperature, timestamp, connectionState, error: mqttError } = useMqttSensor();
@@ -25,9 +29,12 @@ export function MonitoringScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [currentThreshold, setCurrentThreshold] = useState(null);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
   const previousTemperature = useRef(null);
 
-  // Fetch threshold saat ini
   const fetchCurrentThreshold = useCallback(async () => {
     try {
       const thresholds = await Api.getThresholds();
@@ -45,6 +52,7 @@ export function MonitoringScreen() {
     try {
       const data = await Api.getSensorReadings();
       setReadings(data ?? []);
+      setTotalPages(Math.ceil((data?.length || 0) / ITEMS_PER_PAGE));
     } catch (err) {
       setApiError(err.message);
     } finally {
@@ -59,21 +67,18 @@ export function MonitoringScreen() {
     }, [fetchReadings, fetchCurrentThreshold])
   );
 
-  // Monitor perubahan temperature dan kirim notifikasi
   useEffect(() => {
     if (
       notificationsEnabled &&
       temperature !== null &&
       previousTemperature.current !== temperature
     ) {
-      // Notifikasi untuk setiap data baru
       sendLocalNotification(
         "📊 Temperature Update",
         `New reading: ${temperature.toFixed(2)}°C`,
         { temperature, timestamp }
       );
 
-      // Notifikasi khusus jika melebihi threshold
       if (currentThreshold !== null && temperature > currentThreshold) {
         sendLocalNotification(
           "🚨 Temperature Alert!",
@@ -100,6 +105,24 @@ export function MonitoringScreen() {
       setRefreshing(false);
     }
   }, [fetchReadings, fetchCurrentThreshold]);
+
+  // Pagination logic
+  const paginatedData = readings.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
@@ -158,6 +181,7 @@ export function MonitoringScreen() {
           {loading && <ActivityIndicator />}
         </View>
         {apiError && <Text style={styles.errorText}>Failed to load history: {apiError}</Text>}
+        
         <DataTable
           columns={[
             {
@@ -178,9 +202,59 @@ export function MonitoringScreen() {
                 typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
             },
           ]}
-          data={readings}
+          data={paginatedData}
           keyExtractor={(item) => item.id}
         />
+
+        {/* Pagination Controls */}
+        {readings.length > 0 && (
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity
+              style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
+              onPress={goToPrevPage}
+              disabled={currentPage === 1}
+            >
+              <Ionicons 
+                name="chevron-back" 
+                size={20} 
+                color={currentPage === 1 ? "#d1d5db" : "#2563eb"} 
+              />
+              <Text style={[
+                styles.paginationButtonText,
+                currentPage === 1 && styles.paginationButtonTextDisabled
+              ]}>
+                Sebelumnya
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.pageInfo}>
+              <Text style={styles.pageText}>
+                Page {currentPage} of {totalPages}
+              </Text>
+              <Text style={styles.pageSubtext}>
+                {readings.length} total records
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+              onPress={goToNextPage}
+              disabled={currentPage === totalPages}
+            >
+              <Text style={[
+                styles.paginationButtonText,
+                currentPage === totalPages && styles.paginationButtonTextDisabled
+              ]}>
+                Berikutnya
+              </Text>
+              <Ionicons 
+                name="chevron-forward" 
+                size={20} 
+                color={currentPage === totalPages ? "#d1d5db" : "#2563eb"} 
+              />
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -270,5 +344,48 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  paginationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#2563eb",
+  },
+  paginationButtonDisabled: {
+    borderColor: "#d1d5db",
+    opacity: 0.5,
+  },
+  paginationButtonText: {
+    color: "#2563eb",
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  paginationButtonTextDisabled: {
+    color: "#d1d5db",
+  },
+  pageInfo: {
+    alignItems: "center",
+  },
+  pageText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+  },
+  pageSubtext: {
+    fontSize: 12,
+    color: "#6b7280",
+    marginTop: 2,
   },
 });
