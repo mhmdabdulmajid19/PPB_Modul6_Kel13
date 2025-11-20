@@ -52,13 +52,20 @@ export function MonitoringScreen() {
     try {
       const data = await Api.getSensorReadings();
       setReadings(data ?? []);
+      // Hitung total halaman berdasarkan total records
       setTotalPages(Math.ceil((data?.length || 0) / ITEMS_PER_PAGE));
+      // Pastikan currentPage tidak melebihi totalPages baru
+      if (currentPage > Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) && Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) > 0) {
+          setCurrentPage(Math.ceil((data?.length || 0) / ITEMS_PER_PAGE));
+      } else if (Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) === 0) {
+          setCurrentPage(1);
+      }
     } catch (err) {
       setApiError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
   useFocusEffect(
     useCallback(() => {
@@ -210,14 +217,18 @@ export function MonitoringScreen() {
         {readings.length > 0 && (
           <View style={styles.paginationContainer}>
             <TouchableOpacity
-              style={[styles.paginationButton, currentPage === 1 && styles.paginationButtonDisabled]}
+              style={[
+                styles.paginationButton, 
+                styles.prevButton,
+                currentPage === 1 && styles.paginationButtonDisabled
+              ]}
               onPress={goToPrevPage}
               disabled={currentPage === 1}
             >
               <Ionicons 
                 name="chevron-back" 
                 size={20} 
-                color={currentPage === 1 ? "#d1d5db" : "#2563eb"} 
+                color={currentPage === 1 ? "#9ca3af" : "#2563eb"} 
               />
               <Text style={[
                 styles.paginationButtonText,
@@ -237,7 +248,11 @@ export function MonitoringScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.paginationButton, currentPage === totalPages && styles.paginationButtonDisabled]}
+              style={[
+                styles.paginationButton, 
+                styles.nextButton,
+                currentPage === totalPages && styles.paginationButtonDisabled
+              ]}
               onPress={goToNextPage}
               disabled={currentPage === totalPages}
             >
@@ -250,7 +265,7 @@ export function MonitoringScreen() {
               <Ionicons 
                 name="chevron-forward" 
                 size={20} 
-                color={currentPage === totalPages ? "#d1d5db" : "#2563eb"} 
+                color={currentPage === totalPages ? "#9ca3af" : "#2563eb"} 
               />
             </TouchableOpacity>
           </View>
@@ -345,6 +360,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  
+  // --- START: STYLES PAGINATION YANG DIPERBAIKI ---
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -355,17 +372,29 @@ const styles = StyleSheet.create({
   paginationButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 4,
     paddingVertical: 10,
-    paddingHorizontal: 16,
     backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#2563eb",
+    flexGrow: 0,
+    flexShrink: 1,
+    minWidth: 110, // Menambah sedikit agar lebih lega
+  },
+  prevButton: {
+    paddingLeft: 10,
+    paddingRight: 16,
+  },
+  nextButton: {
+    paddingLeft: 16,
+    paddingRight: 10,
   },
   paginationButtonDisabled: {
     borderColor: "#d1d5db",
-    opacity: 0.5,
+    backgroundColor: "#f9fafb",
+    opacity: 1,
   },
   paginationButtonText: {
     color: "#2563eb",
@@ -373,10 +402,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   paginationButtonTextDisabled: {
-    color: "#d1d5db",
+    color: "#9ca3af",
   },
   pageInfo: {
     alignItems: "center",
+    flexGrow: 1,
+    marginHorizontal: 8,
   },
   pageText: {
     fontSize: 14,
@@ -388,4 +419,5 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 2,
   },
+  // --- END: STYLES PAGINATION YANG DIPERBAIKI ---
 });

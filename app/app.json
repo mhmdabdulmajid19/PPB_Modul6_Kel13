@@ -35,8 +35,8 @@
         "topic": "ppb/kel13/iot/temperature"
       },
       "supabase": {
-        "url": "YOUR_SUPABASE_URL",
-        "anonKey": "YOUR_SUPABASE_ANON_KEY"
+        "url": "https://slslzjrcjvroxuylptrg.supabase.co",
+        "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsc2x6anJjanZyb3h1eWxwdHJnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjQ5NjA1MiwiZXhwIjoyMDc4MDcyMDUyfQ.iNNoryqY8SVL20fxCVmOkKGU8ELgUv7GSL6q8S86pLY"
       }
     },
     "plugins": [

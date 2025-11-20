@@ -23,35 +23,75 @@ enableScreens(true);
 // Keep splash screen visible while loading
 SplashScreen.preventAutoHideAsync();
 
-// Custom Splash Screen Component
+// Custom Splash Screen Component - WITH KELOMPOK 13
 function CustomSplashScreen({ onFinish }) {
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
 
   useEffect(() => {
     // Fade in animation
-    Animated.sequence([
+    Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 1000,
         useNativeDriver: true,
       }),
-      Animated.delay(1200),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 600,
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 40,
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      onFinish();
-    });
+    ]).start();
+
+    // Wait and fade out
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        onFinish();
+      });
+    }, 2500);
   }, []);
 
   return (
     <View style={splashStyles.container}>
-      <Animated.View style={[splashStyles.content, { opacity: fadeAnim }]}>
-        <Text style={splashStyles.icon}>🌡️</Text>
+      <Animated.View
+        style={[
+          splashStyles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {/* Icon Thermometer */}
+        <View style={splashStyles.iconContainer}>
+          <Text style={splashStyles.icon}>🌡️</Text>
+        </View>
+
+        {/* App Title */}
         <Text style={splashStyles.title}>IOTWatch</Text>
+        
+        {/* Subtitle */}
         <Text style={splashStyles.subtitle}>Monitor Your Temperature</Text>
+
+        {/* Kelompok 13 Badge */}
+        <View style={splashStyles.groupBadge}>
+          <Text style={splashStyles.groupText}>KELOMPOK 13</Text>
+        </View>
+
+        {/* Version or additional info */}
+        <Text style={splashStyles.versionText}>v1.0.0</Text>
       </Animated.View>
     </View>
   );
@@ -175,19 +215,49 @@ const splashStyles = StyleSheet.create({
   content: {
     alignItems: "center",
   },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
   icon: {
-    fontSize: 80,
-    marginBottom: 20,
+    fontSize: 70,
   },
   title: {
-    fontSize: 40,
+    fontSize: 42,
     fontWeight: "700",
     color: "#fff",
     marginBottom: 8,
+    letterSpacing: 1,
   },
   subtitle: {
     fontSize: 16,
     color: "#dbeafe",
+    fontWeight: "500",
+    marginBottom: 40,
+  },
+  groupBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    marginBottom: 16,
+  },
+  groupText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#fff",
+    letterSpacing: 2,
+  },
+  versionText: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.6)",
     fontWeight: "500",
   },
 });
