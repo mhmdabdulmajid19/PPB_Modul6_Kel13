@@ -16,6 +16,7 @@ import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext.js";
+import { GestureWrapper } from "../components/GestureWrapper.js";
 
 export function ControlScreen({ navigation }) {
   const { user } = useAuth();
@@ -67,99 +68,102 @@ export function ControlScreen({ navigation }) {
     }
   }, [thresholdValue, note, fetchHistory]);
 
-  // Show login required message if user is not logged in
   if (!user) {
     return (
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-        <View style={styles.authRequiredContainer}>
-          <Ionicons name="lock-closed-outline" size={80} color="#d1d5db" />
-          <Text style={styles.authRequiredTitle}>Login Required</Text>
-          <Text style={styles.authRequiredText}>
-            You need to login to access the control panel
-          </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Text style={styles.loginButtonText}>Go to Login</Text>
-          </TouchableOpacity>
-        </View>
+        <GestureWrapper enableSwipe={true}>
+          <View style={styles.authRequiredContainer}>
+            <Ionicons name="lock-closed-outline" size={80} color="#d1d5db" />
+            <Text style={styles.authRequiredTitle}>Login Required</Text>
+            <Text style={styles.authRequiredText}>
+              You need to login to access the control panel
+            </Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Login')}
+            >
+              <Text style={styles.loginButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </GestureWrapper>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.card}>
-            <Text style={styles.title}>Configure Threshold</Text>
-            {latestThreshold !== null && (
-              <Text style={styles.metaText}>
-                Current threshold: {Number(latestThreshold).toFixed(2)}°C
-              </Text>
-            )}
-            <Text style={styles.label}>Threshold (°C)</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={String(thresholdValue)}
-              onChangeText={setThresholdValue}
-            />
-            <Text style={styles.label}>Note (optional)</Text>
-            <TextInput
-              style={[styles.input, styles.noteInput]}
-              value={note}
-              onChangeText={setNote}
-              multiline
-              numberOfLines={3}
-              placeholder="Describe why you are changing the threshold"
-            />
-            {error && <Text style={styles.errorText}>{error}</Text>}
-            <TouchableOpacity
-              style={[styles.button, submitting && styles.buttonDisabled]}
-              onPress={handleSubmit}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Save Threshold</Text>
+      <GestureWrapper enableSwipe={true}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.container}>
+            <View style={styles.card}>
+              <Text style={styles.title}>Configure Threshold</Text>
+              {latestThreshold !== null && (
+                <Text style={styles.metaText}>
+                  Current threshold: {Number(latestThreshold).toFixed(2)}°C
+                </Text>
               )}
-            </TouchableOpacity>
-          </View>
+              <Text style={styles.label}>Threshold (°C)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={String(thresholdValue)}
+                onChangeText={setThresholdValue}
+              />
+              <Text style={styles.label}>Note (optional)</Text>
+              <TextInput
+                style={[styles.input, styles.noteInput]}
+                value={note}
+                onChangeText={setNote}
+                multiline
+                numberOfLines={3}
+                placeholder="Describe why you are changing the threshold"
+              />
+              {error && <Text style={styles.errorText}>{error}</Text>}
+              <TouchableOpacity
+                style={[styles.button, submitting && styles.buttonDisabled]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Save Threshold</Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Threshold History</Text>
-            {loading && <ActivityIndicator />}
-          </View>
-          <DataTable
-            columns={[
-              {
-                key: "created_at",
-                title: "Saved At",
-                render: (value) => (value ? new Date(value).toLocaleString() : "--"),
-              },
-              {
-                key: "value",
-                title: "Threshold (°C)",
-                render: (value) =>
-                  typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-              },
-              {
-                key: "note",
-                title: "Note",
-                render: (value) => value || "-",
-              },
-            ]}
-            data={history}
-            keyExtractor={(item) => item.id}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Threshold History</Text>
+              {loading && <ActivityIndicator />}
+            </View>
+            <DataTable
+              columns={[
+                {
+                  key: "created_at",
+                  title: "Saved At",
+                  render: (value) => (value ? new Date(value).toLocaleString() : "--"),
+                },
+                {
+                  key: "value",
+                  title: "Threshold (°C)",
+                  render: (value) =>
+                    typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+                },
+                {
+                  key: "note",
+                  title: "Note",
+                  render: (value) => value || "-",
+                },
+              ]}
+              data={history}
+              keyExtractor={(item) => item.id}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </GestureWrapper>
     </SafeAreaView>
   );
 }

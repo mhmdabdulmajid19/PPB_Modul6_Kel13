@@ -16,6 +16,7 @@ import { useNotifications } from "../hooks/useNotifications.js";
 import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { GestureWrapper } from "../components/GestureWrapper.js";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -29,7 +30,6 @@ export function MonitoringScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [currentThreshold, setCurrentThreshold] = useState(null);
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
@@ -52,9 +52,7 @@ export function MonitoringScreen() {
     try {
       const data = await Api.getSensorReadings();
       setReadings(data ?? []);
-      // Hitung total halaman berdasarkan total records
       setTotalPages(Math.ceil((data?.length || 0) / ITEMS_PER_PAGE));
-      // Pastikan currentPage tidak melebihi totalPages baru
       if (currentPage > Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) && Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) > 0) {
           setCurrentPage(Math.ceil((data?.length || 0) / ITEMS_PER_PAGE));
       } else if (Math.ceil((data?.length || 0) / ITEMS_PER_PAGE) === 0) {
@@ -113,7 +111,6 @@ export function MonitoringScreen() {
     }
   }, [fetchReadings, fetchCurrentThreshold]);
 
-  // Pagination logic
   const paginatedData = readings.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -133,144 +130,139 @@ export function MonitoringScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-      <ScrollView
-        style={styles.container}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>Realtime Temperature</Text>
-            <View style={styles.notificationToggle}>
-              <Text style={styles.toggleLabel}>🔔</Text>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: "#d0d0d0", true: "#2563eb" }}
-                thumbColor={notificationsEnabled ? "#fff" : "#f4f4f4"}
-              />
+      <GestureWrapper enableSwipe={true}>
+        <ScrollView
+          style={styles.container}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <View style={styles.card}>
+            <View style={styles.headerRow}>
+              <Text style={styles.title}>Realtime Temperature</Text>
+              <View style={styles.notificationToggle}>
+                <Text style={styles.toggleLabel}>🔔</Text>
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
+                  trackColor={{ false: "#d0d0d0", true: "#2563eb" }}
+                  thumbColor={notificationsEnabled ? "#fff" : "#f4f4f4"}
+                />
+              </View>
             </View>
-          </View>
-          
-          <View style={styles.valueRow}>
-            <Text style={styles.temperatureText}>
-              {typeof temperature === "number" ? `${temperature.toFixed(2)}°C` : "--"}
-            </Text>
-          </View>
-          
-          {currentThreshold !== null && (
-            <View style={styles.thresholdInfo}>
-              <Text style={styles.thresholdText}>
-                Threshold: {currentThreshold.toFixed(2)}°C
-              </Text>
-              {temperature !== null && temperature > currentThreshold && (
-                <Text style={styles.alertText}>⚠️ Above Threshold!</Text>
-              )}
-            </View>
-          )}
-          
-          <Text style={styles.metaText}>MQTT status: {connectionState}</Text>
-          {timestamp && (
-            <Text style={styles.metaText}>
-              Last update: {new Date(timestamp).toLocaleString()}
-            </Text>
-          )}
-          {mqttError && <Text style={styles.errorText}>MQTT error: {mqttError}</Text>}
-          
-          {expoPushToken && (
-            <Text style={styles.tokenText}>
-              Push Token: {expoPushToken.substring(0, 20)}...
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Triggered Readings History</Text>
-          {loading && <ActivityIndicator />}
-        </View>
-        {apiError && <Text style={styles.errorText}>Failed to load history: {apiError}</Text>}
-        
-        <DataTable
-          columns={[
-            {
-              key: "recorded_at",
-              title: "Timestamp",
-              render: (value) => (value ? new Date(value).toLocaleString() : "--"),
-            },
-            {
-              key: "temperature",
-              title: "Temperature (°C)",
-              render: (value) =>
-                typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-            },
-            {
-              key: "threshold_value",
-              title: "Threshold (°C)",
-              render: (value) =>
-                typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
-            },
-          ]}
-          data={paginatedData}
-          keyExtractor={(item) => item.id}
-        />
-
-        {/* Pagination Controls */}
-        {readings.length > 0 && (
-          <View style={styles.paginationContainer}>
-            <TouchableOpacity
-              style={[
-                styles.paginationButton, 
-                styles.prevButton,
-                currentPage === 1 && styles.paginationButtonDisabled
-              ]}
-              onPress={goToPrevPage}
-              disabled={currentPage === 1}
-            >
-              <Ionicons 
-                name="chevron-back" 
-                size={20} 
-                color={currentPage === 1 ? "#9ca3af" : "#2563eb"} 
-              />
-              <Text style={[
-                styles.paginationButtonText,
-                currentPage === 1 && styles.paginationButtonTextDisabled
-              ]}>
-                Sebelumnya
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.pageInfo}>
-              <Text style={styles.pageText}>
-                Page {currentPage} of {totalPages}
-              </Text>
-              <Text style={styles.pageSubtext}>
-                {readings.length} total records
+            
+            <View style={styles.valueRow}>
+              <Text style={styles.temperatureText}>
+                {typeof temperature === "number" ? `${temperature.toFixed(2)}°C` : "--"}
               </Text>
             </View>
-
-            <TouchableOpacity
-              style={[
-                styles.paginationButton, 
-                styles.nextButton,
-                currentPage === totalPages && styles.paginationButtonDisabled
-              ]}
-              onPress={goToNextPage}
-              disabled={currentPage === totalPages}
-            >
-              <Text style={[
-                styles.paginationButtonText,
-                currentPage === totalPages && styles.paginationButtonTextDisabled
-              ]}>
-                Berikutnya
+            
+            {currentThreshold !== null && (
+              <View style={styles.thresholdInfo}>
+                <Text style={styles.thresholdText}>
+                  Threshold: {currentThreshold.toFixed(2)}°C
+                </Text>
+                {temperature !== null && temperature > currentThreshold && (
+                  <Text style={styles.alertText}>⚠️ Above Threshold!</Text>
+                )}
+              </View>
+            )}
+            
+            <Text style={styles.metaText}>MQTT status: {connectionState}</Text>
+            {timestamp && (
+              <Text style={styles.metaText}>
+                Last update: {new Date(timestamp).toLocaleString()}
               </Text>
-              <Ionicons 
-                name="chevron-forward" 
-                size={20} 
-                color={currentPage === totalPages ? "#9ca3af" : "#2563eb"} 
-              />
-            </TouchableOpacity>
+            )}
+            {mqttError && <Text style={styles.errorText}>MQTT error: {mqttError}</Text>}
           </View>
-        )}
-      </ScrollView>
+
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Triggered Readings History</Text>
+            {loading && <ActivityIndicator />}
+          </View>
+          {apiError && <Text style={styles.errorText}>Failed to load history: {apiError}</Text>}
+          
+          <DataTable
+            columns={[
+              {
+                key: "recorded_at",
+                title: "Timestamp",
+                render: (value) => (value ? new Date(value).toLocaleString() : "--"),
+              },
+              {
+                key: "temperature",
+                title: "Temperature (°C)",
+                render: (value) =>
+                  typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+              },
+              {
+                key: "threshold_value",
+                title: "Threshold (°C)",
+                render: (value) =>
+                  typeof value === "number" ? `${Number(value).toFixed(2)}` : "--",
+              },
+            ]}
+            data={paginatedData}
+            keyExtractor={(item) => item.id}
+          />
+
+          {readings.length > 0 && (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.paginationButton, 
+                  styles.prevButton,
+                  currentPage === 1 && styles.paginationButtonDisabled
+                ]}
+                onPress={goToPrevPage}
+                disabled={currentPage === 1}
+              >
+                <Ionicons 
+                  name="chevron-back" 
+                  size={20} 
+                  color={currentPage === 1 ? "#9ca3af" : "#2563eb"} 
+                />
+                <Text style={[
+                  styles.paginationButtonText,
+                  currentPage === 1 && styles.paginationButtonTextDisabled
+                ]}>
+                  Sebelumnya
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.pageInfo}>
+                <Text style={styles.pageText}>
+                  Page {currentPage} of {totalPages}
+                </Text>
+                <Text style={styles.pageSubtext}>
+                  {readings.length} total records
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.paginationButton, 
+                  styles.nextButton,
+                  currentPage === totalPages && styles.paginationButtonDisabled
+                ]}
+                onPress={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <Text style={[
+                  styles.paginationButtonText,
+                  currentPage === totalPages && styles.paginationButtonTextDisabled
+                ]}>
+                  Berikutnya
+                </Text>
+                <Ionicons 
+                  name="chevron-forward" 
+                  size={20} 
+                  color={currentPage === totalPages ? "#9ca3af" : "#2563eb"} 
+                />
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
+      </GestureWrapper>
     </SafeAreaView>
   );
 }
@@ -342,11 +334,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: "#555",
   },
-  tokenText: {
-    marginTop: 8,
-    fontSize: 10,
-    color: "#999",
-  },
   errorText: {
     marginTop: 8,
     color: "#c82333",
@@ -360,8 +347,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  
-  // --- START: STYLES PAGINATION YANG DIPERBAIKI ---
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -381,7 +366,7 @@ const styles = StyleSheet.create({
     borderColor: "#2563eb",
     flexGrow: 0,
     flexShrink: 1,
-    minWidth: 110, // Menambah sedikit agar lebih lega
+    minWidth: 110,
   },
   prevButton: {
     paddingLeft: 10,
@@ -419,5 +404,4 @@ const styles = StyleSheet.create({
     color: "#6b7280",
     marginTop: 2,
   },
-  // --- END: STYLES PAGINATION YANG DIPERBAIKI ---
 });

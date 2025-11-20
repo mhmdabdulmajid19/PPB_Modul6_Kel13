@@ -20,10 +20,10 @@ const Stack = createNativeStackNavigator();
 
 enableScreens(true);
 
-// Keep splash screen visible while loading
+// Prevent auto-hide splash screen
 SplashScreen.preventAutoHideAsync();
 
-// Custom Splash Screen Component - WITH KELOMPOK 13
+// Custom Splash Screen Component
 function CustomSplashScreen({ onFinish }) {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
@@ -90,7 +90,7 @@ function CustomSplashScreen({ onFinish }) {
           <Text style={splashStyles.groupText}>KELOMPOK 13</Text>
         </View>
 
-        {/* Version or additional info */}
+        {/* Version */}
         <Text style={splashStyles.versionText}>v1.0.0</Text>
       </Animated.View>
     </View>
@@ -156,6 +156,7 @@ function AppNavigator() {
     }
   }, [appIsReady, loading, showSplash]);
 
+  // Show custom splash screen
   if (!appIsReady || loading || showSplash) {
     return (
       <CustomSplashScreen 
@@ -179,13 +180,13 @@ function AppNavigator() {
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <NavigationContainer theme={theme}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {user ? (
-            <Stack.Screen name="MainTabs" component={TabNavigator} />
-          ) : (
+          {!user ? (
             <>
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="MainTabs" component={TabNavigator} />
             </>
+          ) : (
+            <Stack.Screen name="MainTabs" component={TabNavigator} />
           )}
         </Stack.Navigator>
       </NavigationContainer>
