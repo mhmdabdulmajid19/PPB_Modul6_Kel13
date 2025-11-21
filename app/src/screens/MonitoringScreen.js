@@ -16,7 +16,7 @@ import { useNotifications } from "../hooks/useNotifications.js";
 import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { GestureWrapper } from "../components/GestureWrapper.js";
+import { SwipeGestureHandler } from "../components/SwipeGestureHandler.js";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -130,7 +130,7 @@ export function MonitoringScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-      <GestureWrapper enableSwipe={true}>
+      <SwipeGestureHandler currentRoute="Monitoring">
         <ScrollView
           style={styles.container}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -262,7 +262,7 @@ export function MonitoringScreen() {
             </View>
           )}
         </ScrollView>
-      </GestureWrapper>
+      </SwipeGestureHandler>
     </SafeAreaView>
   );
 }

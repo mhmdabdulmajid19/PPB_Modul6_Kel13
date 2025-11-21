@@ -16,7 +16,7 @@ import { Api } from "../services/api.js";
 import { DataTable } from "../components/DataTable.js";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../contexts/AuthContext.js";
-import { GestureWrapper } from "../components/GestureWrapper.js";
+import { SwipeGestureHandler } from "../components/SwipeGestureHandler.js";
 
 export function ControlScreen({ navigation }) {
   const { user } = useAuth();
@@ -71,7 +71,7 @@ export function ControlScreen({ navigation }) {
   if (!user) {
     return (
       <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-        <GestureWrapper enableSwipe={true}>
+        <SwipeGestureHandler currentRoute="Control">
           <View style={styles.authRequiredContainer}>
             <Ionicons name="lock-closed-outline" size={80} color="#d1d5db" />
             <Text style={styles.authRequiredTitle}>Login Required</Text>
@@ -85,14 +85,14 @@ export function ControlScreen({ navigation }) {
               <Text style={styles.loginButtonText}>Go to Login</Text>
             </TouchableOpacity>
           </View>
-        </GestureWrapper>
+        </SwipeGestureHandler>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-      <GestureWrapper enableSwipe={true}>
+      <SwipeGestureHandler currentRoute="Control">
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -163,7 +163,7 @@ export function ControlScreen({ navigation }) {
             />
           </ScrollView>
         </KeyboardAvoidingView>
-      </GestureWrapper>
+      </SwipeGestureHandler>
     </SafeAreaView>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '../contexts/AuthContext';
+import { SwipeGestureHandler } from '../components/SwipeGestureHandler';
 
 export function ProfileScreen({ navigation }) {
   const { user, signOut, updateProfile } = useAuth();
@@ -53,108 +54,112 @@ export function ProfileScreen({ navigation }) {
   if (!user) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <View style={styles.guestContainer}>
-          <Ionicons name="person-circle-outline" size={100} color="#d1d5db" />
-          <Text style={styles.guestTitle}>Not Logged In</Text>
-          <Text style={styles.guestText}>
-            Please login to access your profile
-          </Text>
-          <TouchableOpacity
-            style={styles.loginButton}
-            onPress={() => navigation.replace('Login')}
-          >
-            <Text style={styles.loginButtonText}>Go to Login</Text>
-          </TouchableOpacity>
-        </View>
+        <SwipeGestureHandler currentRoute="Profile">
+          <View style={styles.guestContainer}>
+            <Ionicons name="person-circle-outline" size={100} color="#d1d5db" />
+            <Text style={styles.guestTitle}>Not Logged In</Text>
+            <Text style={styles.guestText}>
+              Please login to access your profile
+            </Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.replace('Login')}
+            >
+              <Text style={styles.loginButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </SwipeGestureHandler>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <ScrollView>
-        <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            <Ionicons name="person-circle" size={100} color="#2563eb" />
+      <SwipeGestureHandler currentRoute="Profile">
+        <ScrollView>
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <Ionicons name="person-circle" size={100} color="#2563eb" />
+            </View>
+            <Text style={styles.email}>{user.email}</Text>
           </View>
-          <Text style={styles.email}>{user.email}</Text>
-        </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Profile Information</Text>
-            {!editing && (
-              <TouchableOpacity onPress={() => setEditing(true)}>
-                <Ionicons name="create-outline" size={24} color="#2563eb" />
-              </TouchableOpacity>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Profile Information</Text>
+              {!editing && (
+                <TouchableOpacity onPress={() => setEditing(true)}>
+                  <Ionicons name="create-outline" size={24} color="#2563eb" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {editing ? (
+              <View>
+                <Text style={styles.label}>Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter your name"
+                />
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.cancelButton]}
+                    onPress={() => {
+                      setEditing(false);
+                      setName(user?.user_metadata?.name || '');
+                    }}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.button, styles.saveButton, loading && styles.buttonDisabled]}
+                    onPress={handleUpdateProfile}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Name:</Text>
+                <Text style={styles.infoValue}>
+                  {user?.user_metadata?.name || 'Not set'}
+                </Text>
+              </View>
             )}
           </View>
 
-          {editing ? (
-            <View>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter your name"
-              />
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => {
-                    setEditing(false);
-                    setName(user?.user_metadata?.name || '');
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.saveButton, loading && styles.buttonDisabled]}
-                  onPress={handleUpdateProfile}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Account Details</Text>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name:</Text>
+              <Text style={styles.infoLabel}>Email:</Text>
+              <Text style={styles.infoValue}>{user.email}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>User ID:</Text>
+              <Text style={styles.infoValueSmall}>{user.id}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Created:</Text>
               <Text style={styles.infoValue}>
-                {user?.user_metadata?.name || 'Not set'}
+                {new Date(user.created_at).toLocaleDateString()}
               </Text>
             </View>
-          )}
-        </View>
+          </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Account Details</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Email:</Text>
-            <Text style={styles.infoValue}>{user.email}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>User ID:</Text>
-            <Text style={styles.infoValueSmall}>{user.id}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Created:</Text>
-            <Text style={styles.infoValue}>
-              {new Date(user.created_at).toLocaleDateString()}
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={20} color="#dc2626" />
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={20} color="#dc2626" />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SwipeGestureHandler>
     </SafeAreaView>
   );
 }
